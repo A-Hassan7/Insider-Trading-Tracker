@@ -11,7 +11,7 @@ styles = {
         'height': '65vh',
         'background': '#f9f9f9',
         'boxShadow': '6px 6px 6px lightgray',
-        'overflowY': 'auto'
+        #'overflowY': 'auto' does not allow to date picker to overflow
     },
 
     'search_criteria': {
