@@ -1,16 +1,20 @@
+from pathlib import Path
+import os.path
 import requests
-from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
+
+
+from bs4 import BeautifulSoup
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
-import os.path
 
 
 class Form4Scraper():
     def __init__(self):
         self.search_endpoint = "https://www.sec.gov/cgi-bin/browse-edgar"
         self.archive_endpoint = "https://www.sec.gov/Archives/edgar/data"
+        self.saved_transactions_path = Path("saved_transactions/")
         self.reset()
         # create saved_transactions folder
         if not os.path.exists("saved_transactions"):
@@ -177,11 +181,13 @@ class Form4Scraper():
         self.get_accessions()
         self.check_search_complete(to_date)
 
+       
+        data_path = self.saved_transactions_path / f"{self.ticker}.pkl"
         # check if data for current ticker exists and remove accessions that already exist
-        if os.path.exists(f"saved_transactions\{self.ticker}.pkl"):
+        if os.path.exists(data_path):
             print(f"Found saved data for {self.ticker}...\n")
             self.existing_data = True
-            saved_data = pd.read_pickle(f"saved_transactions\{self.ticker}.pkl")
+            saved_data = pd.read_pickle(data_path)
             duplicates = []
             for accession in self.accessions:
                 if accession in saved_data.accession.unique():
@@ -203,7 +209,7 @@ class Form4Scraper():
             transactions.transaction_period = pd.to_datetime(transactions.transaction_period)
             transactions.sort_values('report_period', ascending=False, inplace=True)
             transactions.reset_index(drop=True, inplace=True)
-            transactions.to_pickle(f"saved_transactions\{self.ticker}.pkl")
+            transactions.to_pickle(data_path)
             # return number of files requested, finding the index value of the last accession number
             start_index = transactions[transactions.report_period <= from_date].index[0] if from_date != "" else 0
             end_index = transactions[transactions.accession == self.last_accession].index[-1] + 1
